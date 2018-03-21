@@ -10,7 +10,9 @@ import android.util.Log;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Locale;
 
 /**
@@ -22,7 +24,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String LOG = "DatabaseHelper";
 
     // Database Version
-    private static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 6;
 
     // Database Name
     private static final String DATABASE_NAME = "ProjectsDB.db";
@@ -34,7 +36,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
 
     private static final String CREATE_TABLE_USER = "CREATE TABLE IF NOT EXISTS " + TABLE_USER + " ( " +
-            "Id INTEGER PRIMARY KEY, " +
+            "Id INTEGER PRIMARY KEY AUTOINCREMENT, " +
             "FirstName TEXT, " +
             "MiddleName TEXT, " +
             "LastName TEXT, " +
@@ -53,8 +55,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             ")";
 
     private static final String CREATE_TABLE_PROJECT = "CREATE TABLE IF NOT EXISTS " + TABLE_PROJECT + " ( " +
-            "Id INTEGER PRIMARY KEY, " +
-            "Storey TEXT, " +
+            "Id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+            "Story TEXT, " +
             "EstimatedHrs TEXT, " +
             "EstimateCost TEXT, " +
             "DeliveryDate DATETIME, " +
@@ -97,7 +99,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getWritableDatabase();
 
         ContentValues values = new ContentValues();
-        values.put("Storey", proj.getStorey());
+        values.put("Story", proj.getStory());
         values.put("EstimatedHrs", proj.getEstimatedHrs());
         values.put("EstimateCost", proj.getEstimateCost());
         values.put("DeliveryDate", proj.getDeliveryDate());
@@ -135,7 +137,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
         Project td = new Project();
         td.setId(c.getInt(c.getColumnIndex("Id")));
-        td.setStorey(c.getString(c.getColumnIndex("Storey")));
+        td.setStory(c.getString(c.getColumnIndex("Story")));
         td.setEstimatedHrs(c.getString(c.getColumnIndex("EstimatedHrs")));
         td.setEstimateCost(c.getString(c.getColumnIndex("EstimateCost")));
         td.setDeliveryDate(c.getString(c.getColumnIndex("DeliveryDate")));
@@ -169,7 +171,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             do {
                 Project td = new Project();
                 td.setId(c.getInt(c.getColumnIndex("Id")));
-                td.setStorey(c.getString(c.getColumnIndex("Storey")));
+                td.setStory(c.getString(c.getColumnIndex("Story")));
                 td.setEstimatedHrs(c.getString(c.getColumnIndex("EstimatedHrs")));
                 td.setEstimateCost(c.getString(c.getColumnIndex("EstimateCost")));
                 td.setDeliveryDate(c.getString(c.getColumnIndex("DeliveryDate")));
@@ -190,12 +192,69 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
 
+
+    /*
+ * getting all Projects
+ * */
+    public List<Project> getChildProjects(int id) {
+        List<Project> projects = new ArrayList<Project>();
+        String selectQuery = "SELECT  * FROM " + TABLE_PROJECT + " WHERE ParentId = " + Integer.toString(id) + " Order By Id";
+
+        Log.e(LOG, selectQuery);
+
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor c = db.rawQuery(selectQuery, null);
+
+        // looping through all rows and adding to list
+        if (c != null)
+            if (c.moveToFirst()) {
+                do {
+                    Project td = new Project();
+                    td.setId(c.getInt(c.getColumnIndex("Id")));
+                    td.setStory(c.getString(c.getColumnIndex("Story")));
+                    td.setEstimatedHrs(c.getString(c.getColumnIndex("EstimatedHrs")));
+                    td.setEstimateCost(c.getString(c.getColumnIndex("EstimateCost")));
+                    td.setDeliveryDate(c.getString(c.getColumnIndex("DeliveryDate")));
+                    td.setCreatedAt(c.getString(c.getColumnIndex("CreatedAt")));
+                    td.setUpdatedAt(c.getString(c.getColumnIndex("UpdatedAt")));
+                    td.setUserId(c.getInt(c.getColumnIndex("UserId")));
+                    td.setIsSynched(c.getInt(c.getColumnIndex("IsSynched")));
+                    td.setServerUserId(c.getInt(c.getColumnIndex("ServerUserId")));
+                    td.setParentId(c.getInt(c.getColumnIndex("ParentId")));
+                    td.setServerId(c.getInt(c.getColumnIndex("ServerId")));
+                    td.setServerParentId(c.getInt(c.getColumnIndex("ServerParentId")));
+
+                    // adding to todo list
+                    projects.add(td);
+                } while (c.moveToNext());
+            }
+        return projects;
+    }
+
+    public HashMap<Project, List<Project>> getProjectHierarchy(){
+        HashMap<Project, List<Project>> projectHierarchy = new HashMap<Project, List<Project>>();
+        List<Project> parentProjects = getChildProjects(0);
+
+        if(parentProjects.size() > 0){
+            for (ListIterator<Project> iter = parentProjects.listIterator(); iter.hasNext(); ) {
+                Project proj = iter.next();
+                List<Project> childProjects = getChildProjects(proj.getId());
+                childProjects.add( new Project(999999,"Add Story to this project","","","",0,0,0,proj.getId(),0,0));
+                Log.e("Default Child***",Integer.toString(childProjects.size()));
+                projectHierarchy.put(proj,childProjects);
+            }
+        }
+
+        return projectHierarchy;
+    }
+
+
     /*
 * getting all Projects
 * */
-    public List<Project> getAllProjectsByStorey(String storey) {
+    public List<Project> getAllProjectsByStory(String storey) {
         List<Project> projects = new ArrayList<Project>();
-        String selectQuery = "SELECT  * FROM " + TABLE_PROJECT + " WHERE Storey = '" + storey.replace("'","\'") +"'";
+        String selectQuery = "SELECT  * FROM " + TABLE_PROJECT + " WHERE Story = '" + storey.replace("'","\'") +"'";
 
         Log.e(LOG, selectQuery);
 
@@ -208,7 +267,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             do {
 
                 Log.e("Id***",Integer.toString(c.getColumnIndex("Id")));
-                Log.e("Storey***",Integer.toString(c.getColumnIndex("Storey")));
+                Log.e("Story***",Integer.toString(c.getColumnIndex("Story")));
                 Log.e("EstimatedHrs***",Integer.toString(c.getColumnIndex("EstimatedHrs")));
                 Log.e("EstimateCost***",Integer.toString(c.getColumnIndex("EstimateCost")));
                 Log.e("DeliveryDate***",Integer.toString(c.getColumnIndex("DeliveryDate")));
@@ -223,7 +282,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
                 Project td = new Project();
                 td.setId(c.getInt(c.getColumnIndex("Id")));
-                td.setStorey(c.getString(c.getColumnIndex("Storey")));
+                td.setStory(c.getString(c.getColumnIndex("Story")));
                 td.setEstimatedHrs(c.getString(c.getColumnIndex("EstimatedHrs")));
                 td.setEstimateCost(c.getString(c.getColumnIndex("EstimateCost")));
                 td.setDeliveryDate(c.getString(c.getColumnIndex("DeliveryDate")));
@@ -243,6 +302,23 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return projects;
     }
 
+    public int getOtherProjectCount(String Story, int Id){
+        int count = 0;
+        String selectQuery = "SELECT COUNT(*) AS CountProject FROM " + TABLE_PROJECT + " WHERE Story = '" + Story.replace("'","\'") +"'"
+                +" AND Id != " + Integer.toString(Id);
+
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor c = db.rawQuery(selectQuery, null);
+
+        if (c != null)
+        {
+            c.moveToFirst();
+            count = (c.getInt(c.getColumnIndex("CountProject")));
+
+        }
+        return count;
+    }
 
     /*
  * Updating a Project
@@ -251,7 +327,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getWritableDatabase();
 
         ContentValues values = new ContentValues();
-        values.put("Storey", proj.getStorey());
+        values.put("Story", proj.getStory());
         values.put("EstimatedHrs", proj.getEstimatedHrs());
         values.put("EstimateCost", proj.getEstimateCost());
         values.put("DeliveryDate", proj.getDeliveryDate());

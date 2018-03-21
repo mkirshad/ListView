@@ -4,15 +4,20 @@ import java.util.HashMap;
 import java.util.List;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseExpandableListAdapter;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.ExpandableListView;
+
+import static android.support.v4.content.ContextCompat.startActivity;
 
 
 public class ExpandableListAdapter extends BaseExpandableListAdapter {
@@ -20,21 +25,23 @@ public class ExpandableListAdapter extends BaseExpandableListAdapter {
     private int HeaderCount = 0;
     private int CurrentHeaderCount = 0;
     private Context _context;
-    private List<String> _listDataHeader; // header titles
+    private List<Project> _listDataHeader; // header titles
     // child data in format of header title, child title
-    private HashMap<String, List<String>> _listDataChild;
+    private HashMap<Project, List<Project>> _listDataChild;
 
-    public ExpandableListAdapter(Context context, List<String> listDataHeader,
-                                 HashMap<String, List<String>> listChildData) {
+    public ExpandableListAdapter(Context context, List<Project> listDataHeader,
+                                 HashMap<Project, List<Project>> listChildData) {
         this._context = context;
         this._listDataHeader = listDataHeader;
         this._listDataChild = listChildData;
         this.HeaderCount = listDataHeader.size() ;
-        Log.e("HeaderCount", Integer.toString(HeaderCount) );
+        Log.e("listChildData***", listChildData.toString() );
+        Log.e("listDataHeader***", listDataHeader.toString() );
     }
 
     @Override
-    public Object getChild(int groupPosition, int childPosititon) {
+    public Project getChild(int groupPosition, int childPosititon) {
+        Log.e("getChildCalled***",Integer.toString(groupPosition)+","+Integer.toString(childPosititon));
         return this._listDataChild.get(this._listDataHeader.get(groupPosition))
                 .get(childPosititon);
     }
@@ -48,7 +55,8 @@ public class ExpandableListAdapter extends BaseExpandableListAdapter {
     public View getChildView(int groupPosition, final int childPosition,
                              boolean isLastChild, View convertView, ViewGroup parent) {
 
-        final String childText = (String) getChild(groupPosition, childPosition);
+        Project proj = (Project)getChild(groupPosition, childPosition);
+        final String childText = proj.getStory();
 
         if (convertView == null) {
             LayoutInflater infalInflater = (LayoutInflater) this._context
@@ -58,30 +66,42 @@ public class ExpandableListAdapter extends BaseExpandableListAdapter {
         TextView txtListChild= (TextView) convertView
                 .findViewById(R.id.lblListItem);
 
-        if(isLastChild){
-            txtListChild.setBackgroundColor(Color.YELLOW);
-//            Button btn = (Button) convertView.findViewById(R.id.btn);
-//            btn.setVisibility(View.VISIBLE);
-//            txtListChild.setVisibility(View.GONE);
+
+        if(childText == "Add New Story"){
+            Button btn = (Button) convertView.findViewById(R.id.btnAddStory);
+            btn.setVisibility(View.VISIBLE);
+            btn.setTag(this._listDataHeader.get(groupPosition));
+            Log.e("AddNewStory***",this._listDataHeader.get(groupPosition).toString());
+            txtListChild.setVisibility(View.GONE);
         }
 
+
         txtListChild.setText(childText);
+        txtListChild.setTag(proj);
         return convertView;
     }
 
     @Override
     public int getChildrenCount(int groupPosition) {
-        return this._listDataChild.get(this._listDataHeader.get(groupPosition))
-                .size();
+
+        List<Project> projList = (List)this._listDataChild.get(this._listDataHeader.get(groupPosition));
+        int vSize = 0;
+        if(projList != null)
+             vSize = projList.size();
+
+        Log.e("ChildCountCalled***",Integer.toString(vSize));
+//        return 1;
+        return vSize;
     }
 
     @Override
-    public Object getGroup(int groupPosition) {
+    public Project getGroup(int groupPosition) {
         return this._listDataHeader.get(groupPosition);
     }
 
     @Override
     public int getGroupCount() {
+        Log.e("GroupCount***",Integer.toString(this._listDataHeader.size()));
         return this._listDataHeader.size();
     }
 
@@ -93,7 +113,7 @@ public class ExpandableListAdapter extends BaseExpandableListAdapter {
     @Override
     public View getGroupView(int groupPosition, boolean isExpanded,
                              View convertView, ViewGroup parent) {
-        String headerTitle = (String) getGroup(groupPosition);
+        String headerTitle =  getGroup(groupPosition).getStory();
         if (convertView == null) {
             LayoutInflater infalInflater = (LayoutInflater) this._context
                     .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -126,10 +146,33 @@ public class ExpandableListAdapter extends BaseExpandableListAdapter {
         return true;
     }
 
-    public void setNewItems(List<String> listDataHeader,HashMap<String, List<String>> listChildData) {
+    public void setNewItems(List<Project> listDataHeader,HashMap<Project, List<Project>> listChildData) {
         this._listDataHeader = listDataHeader;
         this._listDataChild = listChildData;
         CurrentHeaderCount = HeaderCount-1;
         notifyDataSetChanged();
+    }
+
+    public void onClickStory(View v) {
+        Log.e("***","On Click pressed");
+        switch (v.getId()) {
+
+            case R.id.btnAddStory:
+                Project proj = (Project) v.getTag();
+                Intent intent = new Intent(this._context, AddStoryActivity.class);
+                Bundle bundle = new Bundle();
+                bundle.putInt("projId",proj.getId());
+                bundle.putString("projTitle", proj.getStory());
+                intent.putExtras(bundle);
+
+//                startActivity(intent);
+
+
+                break;
+
+            default:
+                break;
+        }
+
     }
 }

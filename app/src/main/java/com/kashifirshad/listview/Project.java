@@ -7,7 +7,7 @@ package com.kashifirshad.listview;
 public class Project {
 
     int Id;
-    String Storey;
+    String Story;
     String EstimatedHrs;
     String EstimateCost;
     String DeliveryDate;
@@ -26,7 +26,7 @@ public class Project {
 
     public Project(int id, String storey, String estimatedHrs, String estimateCost, String deliveryDate, int userId, int isSynched, int serverUserId, int parentId, int serverId, int serverParentId) {
         Id = id;
-        Storey = storey;
+        Story = storey;
         EstimatedHrs = estimatedHrs;
         EstimateCost = estimateCost;
         DeliveryDate = deliveryDate;
@@ -41,7 +41,7 @@ public class Project {
     }
 
     public Project(String storey, String estimatedHrs, String estimateCost, String deliveryDate, int userId, int isSynched, int serverUserId, int parentId, int serverId, int serverParentId) {
-        Storey = storey;
+        Story = storey;
         EstimatedHrs = estimatedHrs;
         EstimateCost = estimateCost;
         DeliveryDate = deliveryDate;
@@ -64,12 +64,12 @@ public class Project {
         Id = id;
     }
 
-    public String getStorey() {
-        return Storey;
+    public String getStory() {
+        return Story;
     }
 
-    public void setStorey(String storey) {
-        Storey = storey;
+    public void setStory(String storey) {
+        Story = storey;
     }
 
     public String getEstimatedHrs() {
@@ -158,5 +158,9 @@ public class Project {
 
     public void setServerParentId(int serverParentId) {
         ServerParentId = serverParentId;
+    }
+
+    public Project getAddStoryProj(){
+        return new Project(999999,"Add Story to this project","","","",0,0,0,0,0,0);
     }
 }

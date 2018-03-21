@@ -1,11 +1,13 @@
 package com.kashifirshad.listview;
 
+import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.List;
@@ -26,7 +28,6 @@ public class AddProjectActivity extends AppCompatActivity {
                 EditText editProjTitle = (EditText) findViewById(R.id.editProjTitle);
                 EditText editHours = (EditText) findViewById(R.id.editHours);
                 EditText editCost = (EditText) findViewById(R.id.editCost);
-//                editProjTitle.getText(), editHours.getText(), editCost.getText()
                 Log.e("Project Id haii:", "" );
                 String storeyText = editProjTitle.getText().toString();
                 Log.e("storyText", storeyText);
@@ -34,22 +35,57 @@ public class AddProjectActivity extends AppCompatActivity {
                      Toast.makeText(getApplicationContext(),
                      "Story Text Can not be blank " ,
                      Toast.LENGTH_LONG).show();
-                }else{
+
+                }
+                else if(storeyText == "Add New Story"){
+                    Toast.makeText(getApplicationContext(),
+                            "Story with this text can not be added" ,
+                            Toast.LENGTH_LONG).show();
+                }
+
+                else{
                     DatabaseHelper dh = new DatabaseHelper(getApplicationContext());
-                    List<Project> projList = dh.getAllProjectsByStorey(storeyText);
-                    Log.e("ProjectSize***",Integer.toString(projList.size()));
-                    if(projList.size() > 0){
+                    TextView vId = (TextView) findViewById(R.id.textId2);
+                    int projIdNew = Integer.parseInt(vId.getText().toString());
+                    int count = dh.getOtherProjectCount(storeyText, projIdNew);
+
+                    if(count > 0){
                         Toast.makeText(getApplicationContext(), "A project with same name already Exists ", Toast.LENGTH_LONG).show();
                         Log.e("ProjectAlreadyExists***","Project Already Exists");
                     }else {
-                        Project proj = new Project(editProjTitle.getText().toString(), editHours.getText().toString(), editCost.getText().toString(), null,0,0,0,0,0,0  );
-                        long projId= dh.createProject(proj);
-                        Log.e("Project Id hai:", Long.toString(projId) );
+
+
+
+                        if(projIdNew == 0){
+                            Project proj = new Project(editProjTitle.getText().toString(), editHours.getText().toString(), editCost.getText().toString(), null,0,0,0,0,0,0  );
+                            long projId= dh.createProject(proj);
+                            vId.setText(Long.toString(projId));
+                        }else{
+                            Project proj = new Project(projIdNew, editProjTitle.getText().toString(), editHours.getText().toString(), editCost.getText().toString(), null,0,0,0,0,0,0  );
+                            dh.updateProject(proj);
+                        }
                         Toast.makeText(getApplicationContext(), "Project Saved Successfully", Toast.LENGTH_LONG).show();
+
                     }
                     dh.closeDB();
                 }
             }
         });
+
+        Button btnHome = (Button) findViewById(R.id.btnHome);
+        btnHome.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                startActivity(intent);
+                finish();
+            }
+        });
+    }
+
+    @Override
+    public void onBackPressed() {
+        Toast.makeText(getApplicationContext(),
+                "Press Home button to go back!" ,
+                Toast.LENGTH_LONG).show();
     }
 }

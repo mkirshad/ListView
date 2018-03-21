@@ -10,12 +10,23 @@
 
     <Button
         android:id="@+id/btnSaveProj"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Save"
+        android:layout_width="150dp"
+        android:layout_height="40dp"
+        android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
-        />
+        android:layout_marginStart="28dp"
+        android:text="Save"
+        android:textAllCaps="false" />
+
+    <Button
+        android:id="@+id/btnHome"
+        android:layout_width="150dp"
+        android:layout_height="40dp"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginEnd="21dp"
+        android:text="Home"
+        android:textAllCaps="false" />
 
     <TextView
         android:id="@+id/textProjName"
@@ -30,9 +41,9 @@
         android:id="@+id/editProjTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignEnd="@+id/btnSaveProj"
+        android:layout_alignParentStart="true"
         android:layout_below="@+id/textProjName"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="14dp"
         android:hint="Project Name"
         android:inputType="textPersonName"
         android:maxLength="35" />
@@ -76,5 +87,27 @@
         android:hint="Estimated Cost in $"
         android:inputType="number"
         />
+
+    <TextView
+        android:id="@+id/textId"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/editCost"
+        android:layout_marginStart="11dp"
+        android:layout_marginTop="21dp"
+        android:text="Id:"
+        android:visibility="gone"/>
+
+    <TextView
+        android:id="@+id/textId2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/textId"
+        android:layout_alignBottom="@+id/textId"
+        android:layout_alignStart="@+id/btnSaveProj"
+        android:layout_marginStart="22dp"
+        android:text="0"
+        android:visibility="gone"/>
 
 </RelativeLayout>
