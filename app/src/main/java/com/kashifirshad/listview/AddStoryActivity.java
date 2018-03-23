@@ -1,16 +1,26 @@
 package com.kashifirshad.listview;
 
+import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Intent;
+import android.net.Uri;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 public class AddStoryActivity extends AppCompatActivity {
+    private static final int PICK_FILE_REQUEST = 1;
+    ProgressDialog dialog;
+    private String selectedFilePath;
+    TextView tvFileName;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -110,13 +120,62 @@ public class AddStoryActivity extends AppCompatActivity {
                 }
             }
         });
+        tvFileName = (TextView) findViewById(R.id.tv_file_name);
+
+        CheckBox checkBoxFile = (CheckBox) findViewById(R.id.checkBoxFile);
+        checkBoxFile.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                //is chkIos checked?
+                if (((CheckBox) v).isChecked()) {
+                    showFileChooser();
+                }
+                else{
+
+                }
+                //case 2
+
+            }
+        });
 
 
     }
 
 
+    private void showFileChooser() {
+        Intent intent = new Intent();
+        //sets the select file to all types of files
+        intent.setType("*/*");
+        //allows to select data and return it
+        intent.setAction(Intent.ACTION_GET_CONTENT);
+        //starts new activity to select file and return data
+        startActivityForResult(Intent.createChooser(intent,"Choose File to Upload.."),PICK_FILE_REQUEST);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(resultCode == Activity.RESULT_OK){
+            if(requestCode == PICK_FILE_REQUEST){
+                if(data == null){
+                    //no data present
+                    return;
+                }
 
 
+                Uri selectedFileUri = data.getData();
+                selectedFilePath = FilePath.getPath(this,selectedFileUri);
+//                Log.i(TAG,"Selected File Path:" + selectedFilePath);
+
+                if(selectedFilePath != null && !selectedFilePath.equals("")){
+                    tvFileName.setText(selectedFilePath);
+                }else{
+                    Toast.makeText(this,"Cannot upload file to server",Toast.LENGTH_SHORT).show();
+                }
+            }
+        }
+    }
 
     @Override
     public void onBackPressed() {

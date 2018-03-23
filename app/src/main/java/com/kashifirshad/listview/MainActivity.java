@@ -11,7 +11,9 @@ import java.util.ListIterator;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -22,17 +24,37 @@ import android.widget.ExpandableListView.OnGroupCollapseListener;
 import android.widget.ExpandableListView.OnGroupExpandListener;
 import android.widget.Toast;
 
+import static android.Manifest.permission.ACCESS_NETWORK_STATE;
+import static android.Manifest.permission.GET_ACCOUNTS;
+import static android.Manifest.permission.INTERNET;
+import static android.Manifest.permission.READ_PHONE_STATE;
+import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
+
 public class MainActivity extends Activity{
 
     ExpandableListAdapter listAdapter;
     ExpandableListView expListView;
     List<Project> listDataHeader;
     HashMap<Project, List<Project>> listDataChild;
+    public static final int RequestPermissionCode = 1;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        Button allowPermission = (Button) findViewById(R.id.allowPermission);
+        allowPermission.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                EnableRuntimePermission();
+            }
+        });
+
+        if(checkPermissions() != true)
+            return;
+
+        allowPermission.setVisibility(View.GONE);
 
         Button btnAddProj = (Button) findViewById(R.id.addProj);
 //        Button btnAddStory = (Button) findViewById(R.id.btnAddStory);
@@ -186,4 +208,45 @@ public class MainActivity extends Activity{
                 listDataChild.put((Project) listDataHeader.get(i),childProjects);
         }
     }
+
+    public void EnableRuntimePermission() {
+        ActivityCompat.requestPermissions(MainActivity.this, new String[]
+                {
+                        GET_ACCOUNTS,
+                        READ_PHONE_STATE,
+                        INTERNET,
+                        ACCESS_NETWORK_STATE,
+                        READ_EXTERNAL_STORAGE
+                }, RequestPermissionCode);
+    }
+
+    private boolean checkPermissions()
+    {
+
+        int res1 = getApplicationContext().checkCallingOrSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE);
+        int res2 = getApplicationContext().checkCallingOrSelfPermission(android.Manifest.permission.ACCESS_NETWORK_STATE);
+        int res3 = getApplicationContext().checkCallingOrSelfPermission(android.Manifest.permission.INTERNET);
+        int res4 = getApplicationContext().checkCallingOrSelfPermission(android.Manifest.permission.READ_PHONE_STATE);
+        int res5 = getApplicationContext().checkCallingOrSelfPermission(android.Manifest.permission.GET_ACCOUNTS);
+
+        if ((res1 == PackageManager.PERMISSION_GRANTED) && (res2 == PackageManager.PERMISSION_GRANTED)
+        && res3 == PackageManager.PERMISSION_GRANTED && res4 == PackageManager.PERMISSION_GRANTED
+        && res5 == PackageManager.PERMISSION_GRANTED){
+            return true;
+        }else{
+            return false;
+        }
+    }
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case RequestPermissionCode:
+                finish();
+                startActivity(getIntent());
+                break;
+        }
+    }
+
 }
