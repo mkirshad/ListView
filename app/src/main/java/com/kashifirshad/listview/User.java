@@ -1,6 +1,8 @@
 package com.kashifirshad.listview;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 
 /**
  * Created by biome on 3/17/2018.
@@ -8,7 +10,7 @@ import java.util.Date;
 
 public class User {
 
-    int Id;
+    long Id;
     String FirstName;
     String MiddleName;
     String LastName;
@@ -20,15 +22,19 @@ public class User {
     String City;
     String State;
     String Country;
+    int SyncDuration;
+    int ShowUnreadStoriesOnly;
     String CreatedAt;
     String UpdatedAt;
-    Boolean IsSynched;
+    int IsSynched;
     int ServerId;
 
     public User(){
 
     }
-    public User(int id, String firstName, String middleName, String lastName, String emailAddress, String skypeId, String watsAppNo, String addressLine1, String addressLine2, String city, String state, String country, String createdAt, String updatedAt, Boolean isSynched, int serverId) {
+    public User(long id, String firstName, String middleName, String lastName, String emailAddress, String skypeId, String watsAppNo, String addressLine1,
+                String addressLine2, String city, String state, String country, int syncDuration, int showUnreadStoriesOnly,
+                int isSynched, int serverId) {
         Id = id;
         FirstName = firstName;
         MiddleName = middleName;
@@ -41,13 +47,17 @@ public class User {
         City = city;
         State = state;
         Country = country;
-        CreatedAt = createdAt;
-        UpdatedAt = updatedAt;
+        SyncDuration = syncDuration;
+        ShowUnreadStoriesOnly = showUnreadStoriesOnly;
+        CreatedAt = getDateTime();
+        UpdatedAt = getDateTime();
         IsSynched = isSynched;
         ServerId = serverId;
     }
 
-    public User(String firstName, String middleName, String lastName, String emailAddress, String skypeId, String watsAppNo, String addressLine1, String addressLine2, String city, String state, String country, String createdAt, String updatedAt, Boolean isSynched, int serverId) {
+    public User(String firstName, String middleName, String lastName, String emailAddress, String skypeId, String watsAppNo, String addressLine1,
+                String addressLine2, String city, String state, String country, int syncDuration, int showUnreadStoriesOnly,
+                int isSynched, int serverId) {
         FirstName = firstName;
         MiddleName = middleName;
         LastName = lastName;
@@ -59,17 +69,18 @@ public class User {
         City = city;
         State = state;
         Country = country;
-        CreatedAt = createdAt;
-        UpdatedAt = updatedAt;
+        SyncDuration = syncDuration;
+        ShowUnreadStoriesOnly = showUnreadStoriesOnly;
+        UpdatedAt = getDateTime();
         IsSynched = isSynched;
         ServerId = serverId;
     }
 
-    public int getId() {
+    public long getId() {
         return Id;
     }
 
-    public void setId(int id) {
+    public void setId(long id) {
         Id = id;
     }
 
@@ -177,11 +188,11 @@ public class User {
         UpdatedAt = updatedAt;
     }
 
-    public Boolean getSynched() {
+    public int getSynched() {
         return IsSynched;
     }
 
-    public void setSynched(Boolean synched) {
+    public void setSynched(int synched) {
         IsSynched = synched;
     }
 
@@ -191,5 +202,28 @@ public class User {
 
     public void setServerId(int serverId) {
         ServerId = serverId;
+    }
+
+
+    public int getSyncDuration(){
+        return SyncDuration;
+    }
+
+    public void setSyncDuration(int synchDuration){
+         SyncDuration = synchDuration;
+    }
+
+    public int getShowUnreadStoriesOnly(){
+        return ShowUnreadStoriesOnly;
+    }
+    public void setShowUnreadStoriesOnly(int showUnreadStoriesOnly){
+        ShowUnreadStoriesOnly = showUnreadStoriesOnly;
+    }
+
+    private String getDateTime() {
+        SimpleDateFormat dateFormat = new SimpleDateFormat(
+                "yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+        Date date = new Date();
+        return dateFormat.format(date);
     }
 }

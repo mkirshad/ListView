@@ -24,7 +24,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String LOG = "DatabaseHelper";
 
     // Database Version
-    private static final int DATABASE_VERSION = 6;
+    private static final int DATABASE_VERSION = 9;
 
     // Database Name
     private static final String DATABASE_NAME = "ProjectsDB.db";
@@ -40,7 +40,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             "FirstName TEXT, " +
             "MiddleName TEXT, " +
             "LastName TEXT, " +
-            "EmailAddress TEXT, " +
+            "EmailAddress TEXT NOT NULL, " +
             "SkypeId TEXT, " +
             "WatsAppNo TEXT, " +
             "AddressLine1 TEXT, " +
@@ -48,15 +48,19 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             "City TEXT, " +
             "State TEXT, " +
             "Country TEXT, " +
+            "UnReadOnly INTEGER, " +
+            "SyncDuration INTEGER, " +
             "CreatedAt DATETIME, " +
             "UpdatedAt DATETIME, " +
             "IsSynched INTEGER, " +
-            "ServerId INTEGER" +
+            "ServerId INTEGER," +
+            "CONSTRAINT uq_email UNIQUE (EmailAddress) "+
             ")";
 
     private static final String CREATE_TABLE_PROJECT = "CREATE TABLE IF NOT EXISTS " + TABLE_PROJECT + " ( " +
             "Id INTEGER PRIMARY KEY AUTOINCREMENT, " +
             "Story TEXT, " +
+            "FilePaths TEXT,"+
             "EstimatedHrs TEXT, " +
             "EstimateCost TEXT, " +
             "DeliveryDate DATETIME, " +
@@ -100,12 +104,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
         ContentValues values = new ContentValues();
         values.put("Story", proj.getStory());
+        values.put("FilePaths", proj.getFilePaths());
         values.put("EstimatedHrs", proj.getEstimatedHrs());
         values.put("EstimateCost", proj.getEstimateCost());
         values.put("DeliveryDate", proj.getDeliveryDate());
-        values.put("CreatedAt", getDateTime());
-        values.put("UpdatedAt", getDateTime());
-        values.put("UserId", proj.getUserId());
+        values.put("CreatedAt", proj.getCreatedAt());
+        values.put("UpdatedAt", proj.getUpdatedAt());
+        values.put("UserId", proj.getUser().getId());
         values.put("IsSynched", proj.getIsSynched());
         values.put("ServerUserId", proj.getServerUserId());
         values.put("ParentId", proj.getParentId());
@@ -128,8 +133,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         String selectQuery = "SELECT  * FROM " + TABLE_PROJECT +
                 " WHERE Id   = " + id;
 
-        Log.e(LOG, selectQuery);
-
         Cursor c = db.rawQuery(selectQuery, null);
 
         if (c != null)
@@ -138,6 +141,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         Project td = new Project();
         td.setId(c.getInt(c.getColumnIndex("Id")));
         td.setStory(c.getString(c.getColumnIndex("Story")));
+        td.setFilePaths(c.getString(c.getColumnIndex("FilePaths")));
         td.setEstimatedHrs(c.getString(c.getColumnIndex("EstimatedHrs")));
         td.setEstimateCost(c.getString(c.getColumnIndex("EstimateCost")));
         td.setDeliveryDate(c.getString(c.getColumnIndex("DeliveryDate")));
@@ -160,8 +164,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         List<Project> projects = new ArrayList<Project>();
         String selectQuery = "SELECT  * FROM " + TABLE_PROJECT;
 
-        Log.e(LOG, selectQuery);
-
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor c = db.rawQuery(selectQuery, null);
 
@@ -172,6 +174,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 Project td = new Project();
                 td.setId(c.getInt(c.getColumnIndex("Id")));
                 td.setStory(c.getString(c.getColumnIndex("Story")));
+                td.setFilePaths(c.getString(c.getColumnIndex("FilePaths")));
                 td.setEstimatedHrs(c.getString(c.getColumnIndex("EstimatedHrs")));
                 td.setEstimateCost(c.getString(c.getColumnIndex("EstimateCost")));
                 td.setDeliveryDate(c.getString(c.getColumnIndex("DeliveryDate")));
@@ -200,7 +203,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         List<Project> projects = new ArrayList<Project>();
         String selectQuery = "SELECT  * FROM " + TABLE_PROJECT + " WHERE ParentId = " + Integer.toString(id) + " Order By Id";
 
-        Log.e(LOG, selectQuery);
 
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor c = db.rawQuery(selectQuery, null);
@@ -212,6 +214,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                     Project td = new Project();
                     td.setId(c.getInt(c.getColumnIndex("Id")));
                     td.setStory(c.getString(c.getColumnIndex("Story")));
+                    td.setFilePaths(c.getString(c.getColumnIndex("FilePaths")));
                     td.setEstimatedHrs(c.getString(c.getColumnIndex("EstimatedHrs")));
                     td.setEstimateCost(c.getString(c.getColumnIndex("EstimateCost")));
                     td.setDeliveryDate(c.getString(c.getColumnIndex("DeliveryDate")));
@@ -223,7 +226,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                     td.setParentId(c.getInt(c.getColumnIndex("ParentId")));
                     td.setServerId(c.getInt(c.getColumnIndex("ServerId")));
                     td.setServerParentId(c.getInt(c.getColumnIndex("ServerParentId")));
-
+                    td.setUser(getUser(c.getInt(c.getColumnIndex("UserId"))));
                     // adding to todo list
                     projects.add(td);
                 } while (c.moveToNext());
@@ -231,76 +234,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return projects;
     }
 
-    public HashMap<Project, List<Project>> getProjectHierarchy(){
-        HashMap<Project, List<Project>> projectHierarchy = new HashMap<Project, List<Project>>();
-        List<Project> parentProjects = getChildProjects(0);
-
-        if(parentProjects.size() > 0){
-            for (ListIterator<Project> iter = parentProjects.listIterator(); iter.hasNext(); ) {
-                Project proj = iter.next();
-                List<Project> childProjects = getChildProjects(proj.getId());
-                childProjects.add( new Project(999999,"Add Story to this project","","","",0,0,0,proj.getId(),0,0));
-                Log.e("Default Child***",Integer.toString(childProjects.size()));
-                projectHierarchy.put(proj,childProjects);
-            }
-        }
-
-        return projectHierarchy;
-    }
-
-
-    /*
-* getting all Projects
-* */
-    public List<Project> getAllProjectsByStory(String storey) {
-        List<Project> projects = new ArrayList<Project>();
-        String selectQuery = "SELECT  * FROM " + TABLE_PROJECT + " WHERE Story = '" + storey.replace("'","\'") +"'";
-
-        Log.e(LOG, selectQuery);
-
-        SQLiteDatabase db = this.getReadableDatabase();
-        Cursor c = db.rawQuery(selectQuery, null);
-
-        // looping through all rows and adding to list
-        if (c != null)
-        if (c.moveToFirst()) {
-            do {
-
-                Log.e("Id***",Integer.toString(c.getColumnIndex("Id")));
-                Log.e("Story***",Integer.toString(c.getColumnIndex("Story")));
-                Log.e("EstimatedHrs***",Integer.toString(c.getColumnIndex("EstimatedHrs")));
-                Log.e("EstimateCost***",Integer.toString(c.getColumnIndex("EstimateCost")));
-                Log.e("DeliveryDate***",Integer.toString(c.getColumnIndex("DeliveryDate")));
-                Log.e("CreatedAt***",Integer.toString(c.getColumnIndex("CreatedAt")));
-                Log.e("UpdatedAt***",Integer.toString(c.getColumnIndex("UpdatedAt")));
-                Log.e("IsSynched***",Integer.toString(c.getColumnIndex("IsSynched")));
-                Log.e("ServerUserId***",Integer.toString(c.getColumnIndex("ServerUserId")));
-                Log.e("ServerUserId***",Integer.toString(c.getColumnIndex("ServerUserId")));
-                Log.e("ParentId***",Integer.toString(c.getColumnIndex("ParentId")));
-                Log.e("ServerId***",Integer.toString(c.getColumnIndex("ServerId")));
-                Log.e("ServerParentId***",Integer.toString(c.getColumnIndex("ServerParentId")));
-
-                Project td = new Project();
-                td.setId(c.getInt(c.getColumnIndex("Id")));
-                td.setStory(c.getString(c.getColumnIndex("Story")));
-                td.setEstimatedHrs(c.getString(c.getColumnIndex("EstimatedHrs")));
-                td.setEstimateCost(c.getString(c.getColumnIndex("EstimateCost")));
-                td.setDeliveryDate(c.getString(c.getColumnIndex("DeliveryDate")));
-                td.setCreatedAt(c.getString(c.getColumnIndex("CreatedAt")));
-                td.setUpdatedAt(c.getString(c.getColumnIndex("UpdatedAt")));
-                td.setUserId(c.getInt(c.getColumnIndex("UserId")));
-                td.setIsSynched(c.getInt(c.getColumnIndex("IsSynched")));
-                td.setServerUserId(c.getInt(c.getColumnIndex("ServerUserId")));
-                td.setParentId(c.getInt(c.getColumnIndex("ParentId")));
-                td.setServerId(c.getInt(c.getColumnIndex("ServerId")));
-                td.setServerParentId(c.getInt(c.getColumnIndex("ServerParentId")));
-
-                // adding to todo list
-                projects.add(td);
-            } while (c.moveToNext());
-        }
-        return projects;
-    }
 
     public int getOtherProjectCount(String Story, int Id){
         int count = 0;
@@ -315,7 +248,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         {
             c.moveToFirst();
             count = (c.getInt(c.getColumnIndex("CountProject")));
-
         }
         return count;
     }
@@ -328,11 +260,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
         ContentValues values = new ContentValues();
         values.put("Story", proj.getStory());
+        values.put("FilePaths", proj.getFilePaths());
         values.put("EstimatedHrs", proj.getEstimatedHrs());
         values.put("EstimateCost", proj.getEstimateCost());
         values.put("DeliveryDate", proj.getDeliveryDate());
-//        values.put("CreatedAt", getDateTime());
-        values.put("UpdatedAt", getDateTime());
+        values.put("CreatedAt", proj.getCreatedAt());
+        values.put("UpdatedAt", proj.getUpdatedAt());
         values.put("UserId", proj.getUserId());
         values.put("IsSynched", proj.getIsSynched());
         values.put("ServerUserId", proj.getServerUserId());
@@ -356,12 +289,125 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 new String[] { String.valueOf(id) });
     }
 
-    private String getDateTime() {
-        SimpleDateFormat dateFormat = new SimpleDateFormat(
-                "yyyy-MM-dd HH:mm:ss", Locale.getDefault());
-        Date date = new Date();
-        return dateFormat.format(date);
+ /* ************** User Funtions ******************** */
+ public User getUser(String email){
+     User usr = new User();
+     String selectQuery = "SELECT * FROM " + TABLE_USER + " WHERE EmailAddress = '" + email.replace("'","\'") +"'";
+     SQLiteDatabase db = this.getReadableDatabase();
+     Cursor c = db.rawQuery(selectQuery, null);
+     if (c != null && c.moveToFirst())
+     {
+
+         usr.setId(c.getInt(c.getColumnIndex("Id")));
+         usr.setFirstName(c.getString(c.getColumnIndex("FirstName")));
+         usr.setLastName(c.getString(c.getColumnIndex("LastName")));
+         usr.setMiddleName(c.getString(c.getColumnIndex("MiddleName")));
+         usr.setEmailAddress(c.getString(c.getColumnIndex("EmailAddress")));
+         usr.setSkypeId(c.getString(c.getColumnIndex("SkypeId")));
+         usr.setWatsAppNo(c.getString(c.getColumnIndex("WatsAppNo")));
+         usr.setAddressLine1(c.getString(c.getColumnIndex("AddressLine1")));
+         usr.setAddressLine2(c.getString(c.getColumnIndex("AddressLine2")));
+         usr.setCity(c.getString(c.getColumnIndex("City")));
+         usr.setState(c.getString(c.getColumnIndex("State")));
+         usr.setCountry(c.getString(c.getColumnIndex("Country")));
+         usr.setShowUnreadStoriesOnly(c.getInt(c.getColumnIndex("UnReadOnly")));
+         usr.setSyncDuration(c.getInt(c.getColumnIndex("SyncDuration")));
+         usr.setCreatedAt(c.getString(c.getColumnIndex("CreatedAt")));
+         usr.setUpdatedAt(c.getString(c.getColumnIndex("UpdatedAt")));
+         usr.setSynched(c.getInt(c.getColumnIndex("IsSynched")));
+         usr.setServerId(c.getInt(c.getColumnIndex("ServerId")));
+     }
+     return usr;
+ }
+
+
+
+    public User getUser(int id){
+        User usr = new User();
+        String selectQuery = "SELECT * FROM " + TABLE_USER + " WHERE Id = '" + Integer.toString(id) +"'";
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor c = db.rawQuery(selectQuery, null);
+        if (c != null && c.moveToFirst())
+        {
+
+            usr.setId(c.getInt(c.getColumnIndex("Id")));
+            usr.setFirstName(c.getString(c.getColumnIndex("FirstName")));
+            usr.setLastName(c.getString(c.getColumnIndex("LastName")));
+            usr.setMiddleName(c.getString(c.getColumnIndex("MiddleName")));
+            usr.setEmailAddress(c.getString(c.getColumnIndex("EmailAddress")));
+            usr.setSkypeId(c.getString(c.getColumnIndex("SkypeId")));
+            usr.setWatsAppNo(c.getString(c.getColumnIndex("WatsAppNo")));
+            usr.setAddressLine1(c.getString(c.getColumnIndex("AddressLine1")));
+            usr.setAddressLine2(c.getString(c.getColumnIndex("AddressLine2")));
+            usr.setCity(c.getString(c.getColumnIndex("City")));
+            usr.setState(c.getString(c.getColumnIndex("State")));
+            usr.setCountry(c.getString(c.getColumnIndex("Country")));
+            usr.setShowUnreadStoriesOnly(c.getInt(c.getColumnIndex("UnReadOnly")));
+            usr.setSyncDuration(c.getInt(c.getColumnIndex("SyncDuration")));
+            usr.setCreatedAt(c.getString(c.getColumnIndex("CreatedAt")));
+            usr.setUpdatedAt(c.getString(c.getColumnIndex("UpdatedAt")));
+            usr.setSynched(c.getInt(c.getColumnIndex("IsSynched")));
+            usr.setServerId(c.getInt(c.getColumnIndex("ServerId")));
+        }
+        return usr;
     }
+
+
+    public long createUser(User user) {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put("FirstName", user.getFirstName());
+        values.put("MiddleName", user.getMiddleName());
+        values.put("LastName", user.getLastName());
+        values.put("EmailAddress", user.getEmailAddress());
+        values.put("SkypeId", user.getSkypeId());
+        values.put("WatsAppNo", user.WatsAppNo);
+        values.put("AddressLine1", user.getAddressLine1());
+        values.put("AddressLine2", user.getAddressLine2());
+        values.put("City", user.getCity());
+        values.put("State", user.getState());
+        values.put("Country", user.getCountry());
+        values.put("UnReadOnly", user.getShowUnreadStoriesOnly());
+        values.put("SyncDuration", user.getSyncDuration());
+        values.put("CreatedAt", user.getCreatedAt());
+        values.put("UpdatedAt", user.getUpdatedAt());
+        values.put("IsSynched", user.getSynched());
+        values.put("ServerId", user.getServerId());
+
+        // insert row
+        long id = db.insert(TABLE_USER, null, values);
+        return id;
+    }
+
+
+    public long updateUser(User user) {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put("FirstName", user.getFirstName());
+        values.put("MiddleName", user.getMiddleName());
+        values.put("LastName", user.getLastName());
+        values.put("EmailAddress", user.getEmailAddress());
+        values.put("SkypeId", user.getSkypeId());
+        values.put("WatsAppNo", user.WatsAppNo);
+        values.put("AddressLine1", user.getAddressLine1());
+        values.put("AddressLine2", user.getAddressLine2());
+        values.put("City", user.getCity());
+        values.put("State", user.getState());
+        values.put("Country", user.getCountry());
+        values.put("UnReadOnly", user.getShowUnreadStoriesOnly());
+        values.put("SyncDuration", user.getSyncDuration());
+        values.put("UpdatedAt", user.getUpdatedAt());
+        values.put("IsSynched", user.getSynched());
+        values.put("ServerId", user.getServerId());
+
+        // insert row
+        return db.update(TABLE_USER, values,   " Id = ?",
+                new String[] { String.valueOf(user.getId()) });
+    }
+
+
 
     // closing database
     public void closeDB() {

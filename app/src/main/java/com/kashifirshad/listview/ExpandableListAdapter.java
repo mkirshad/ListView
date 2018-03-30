@@ -35,13 +35,10 @@ public class ExpandableListAdapter extends BaseExpandableListAdapter {
         this._listDataHeader = listDataHeader;
         this._listDataChild = listChildData;
         this.HeaderCount = listDataHeader.size() ;
-        Log.e("listChildData***", listChildData.toString() );
-        Log.e("listDataHeader***", listDataHeader.toString() );
     }
 
     @Override
     public Project getChild(int groupPosition, int childPosititon) {
-        Log.e("getChildCalled***",Integer.toString(groupPosition)+","+Integer.toString(childPosititon));
         return this._listDataChild.get(this._listDataHeader.get(groupPosition))
                 .get(childPosititon);
     }
@@ -56,7 +53,7 @@ public class ExpandableListAdapter extends BaseExpandableListAdapter {
                              boolean isLastChild, View convertView, ViewGroup parent) {
 
         Project proj = (Project)getChild(groupPosition, childPosition);
-        final String childText = proj.getStory();
+        String childText = proj.getStory();
 
         if (convertView == null) {
             LayoutInflater infalInflater = (LayoutInflater) this._context
@@ -71,11 +68,16 @@ public class ExpandableListAdapter extends BaseExpandableListAdapter {
             Button btn = (Button) convertView.findViewById(R.id.btnAddStory);
             btn.setVisibility(View.VISIBLE);
             btn.setTag(this._listDataHeader.get(groupPosition));
-            Log.e("AddNewStory***",this._listDataHeader.get(groupPosition).toString());
             txtListChild.setVisibility(View.GONE);
         }
 
+        if(childText.length() > 30){
+            childText = childText.substring(0,30)+" ...";
+        }
 
+        String filePaths = proj.getFilePaths();
+        if(filePaths != null && !filePaths.equals(""))
+            childText = "* " +childText;
         txtListChild.setText(childText);
         txtListChild.setTag(proj);
         return convertView;
@@ -89,8 +91,6 @@ public class ExpandableListAdapter extends BaseExpandableListAdapter {
         if(projList != null)
              vSize = projList.size();
 
-        Log.e("ChildCountCalled***",Integer.toString(vSize));
-//        return 1;
         return vSize;
     }
 
@@ -101,7 +101,6 @@ public class ExpandableListAdapter extends BaseExpandableListAdapter {
 
     @Override
     public int getGroupCount() {
-        Log.e("GroupCount***",Integer.toString(this._listDataHeader.size()));
         return this._listDataHeader.size();
     }
 
@@ -113,7 +112,7 @@ public class ExpandableListAdapter extends BaseExpandableListAdapter {
     @Override
     public View getGroupView(int groupPosition, boolean isExpanded,
                              View convertView, ViewGroup parent) {
-        String headerTitle =  getGroup(groupPosition).getStory();
+        String headerTitle = getGroup(groupPosition).getUser().getEmailAddress().replace("@gmail.com","")+"-" + getGroup(groupPosition).getStory();
         if (convertView == null) {
             LayoutInflater infalInflater = (LayoutInflater) this._context
                     .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -124,10 +123,8 @@ public class ExpandableListAdapter extends BaseExpandableListAdapter {
                 .findViewById(R.id.lblListHeader);
         lblListHeader.setTypeface(null, Typeface.BOLD);
         lblListHeader.setText(headerTitle);
-        Log.e("CurrentHeaderCount", Integer.toString(CurrentHeaderCount));
         if(!isExpanded)
         if(CurrentHeaderCount < HeaderCount) {
-//            Log.e("CurrentHeaderCount", Integer.toString(CurrentHeaderCount));
             ExpandableListView eLV = (ExpandableListView) parent;
             eLV.expandGroup(groupPosition);
             CurrentHeaderCount++;
@@ -154,7 +151,6 @@ public class ExpandableListAdapter extends BaseExpandableListAdapter {
     }
 
     public void onClickStory(View v) {
-        Log.e("***","On Click pressed");
         switch (v.getId()) {
 
             case R.id.btnAddStory:

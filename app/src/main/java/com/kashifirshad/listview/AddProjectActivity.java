@@ -16,11 +16,8 @@ public class AddProjectActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Log.e("Project hai:", "ONE 72" );
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_project);
-        Log.e("Project hai:", "ONE 72" );
-
 
         Button btnAddProj = (Button) findViewById(R.id.btnSaveProj);
         btnAddProj.setOnClickListener(new View.OnClickListener() {
@@ -28,16 +25,14 @@ public class AddProjectActivity extends AppCompatActivity {
                 EditText editProjTitle = (EditText) findViewById(R.id.editProjTitle);
                 EditText editHours = (EditText) findViewById(R.id.editHours);
                 EditText editCost = (EditText) findViewById(R.id.editCost);
-                Log.e("Project Id haii:", "" );
-                String storeyText = editProjTitle.getText().toString();
-                Log.e("storyText", storeyText);
-                if(storeyText.length() == 0){
+                String StoryText = editProjTitle.getText().toString();
+                if(StoryText.length() == 0){
                      Toast.makeText(getApplicationContext(),
                      "Story Text Can not be blank " ,
                      Toast.LENGTH_LONG).show();
 
                 }
-                else if(storeyText == "Add New Story"){
+                else if(StoryText == "Add New Story"){
                     Toast.makeText(getApplicationContext(),
                             "Story with this text can not be added" ,
                             Toast.LENGTH_LONG).show();
@@ -47,21 +42,20 @@ public class AddProjectActivity extends AppCompatActivity {
                     DatabaseHelper dh = new DatabaseHelper(getApplicationContext());
                     TextView vId = (TextView) findViewById(R.id.textId2);
                     int projIdNew = Integer.parseInt(vId.getText().toString());
-                    int count = dh.getOtherProjectCount(storeyText, projIdNew);
+                    int count = dh.getOtherProjectCount(StoryText, projIdNew);
 
                     if(count > 0){
                         Toast.makeText(getApplicationContext(), "A project with same name already Exists ", Toast.LENGTH_LONG).show();
-                        Log.e("ProjectAlreadyExists***","Project Already Exists");
                     }else {
 
 
 
                         if(projIdNew == 0){
-                            Project proj = new Project(editProjTitle.getText().toString(), editHours.getText().toString(), editCost.getText().toString(), null,0,0,0,0,0,0  );
+                            Project proj = new Project(editProjTitle.getText().toString(), null, editHours.getText().toString(), editCost.getText().toString(), null,0,0,0,0,0,MainActivity.user  );
                             long projId= dh.createProject(proj);
                             vId.setText(Long.toString(projId));
                         }else{
-                            Project proj = new Project(projIdNew, editProjTitle.getText().toString(), editHours.getText().toString(), editCost.getText().toString(), null,0,0,0,0,0,0  );
+                            Project proj = new Project(projIdNew, editProjTitle.getText().toString(),null, editHours.getText().toString(), editCost.getText().toString(), null,0,0,0,0,0 ,MainActivity.user );
                             dh.updateProject(proj);
                         }
                         Toast.makeText(getApplicationContext(), "Project Saved Successfully", Toast.LENGTH_LONG).show();

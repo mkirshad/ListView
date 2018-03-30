@@ -109,13 +109,14 @@ tools:context="com.kashifirshad.listview.AddStoryActivity"
         android:id="@+id/Story"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_toEndOf="@+id/txtStory"
+        android:minHeight="120dp"
         android:layout_alignBaseline="@+id/txtStory"
         android:layout_alignBottom="@+id/txtStory"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="10dp"
+        android:layout_toEndOf="@+id/txtStory"
         android:ems="10"
         android:hint="Story"
-        android:layout_marginStart="10dp"
         android:inputType="textMultiLine"
         android:visibility="visible"
 
@@ -133,29 +134,24 @@ tools:context="com.kashifirshad.listview.AddStoryActivity"
         android:layout_toEndOf="@+id/txtStory"
         android:visibility="gone" />
 
-
-
-    <CheckBox
-        android:id="@+id/checkBoxFile"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-
-        android:layout_below="@id/txtStory"
-        android:layout_marginStart="10dp"
+    <Button
+        android:id="@+id/btnUploadFile"
+        android:layout_width="150dp"
+        android:layout_height="40dp"
+        android:layout_below="@id/Story"
         android:layout_marginTop="15dp"
-        android:text="Upload File" />
+        android:text="Upload File"
+        android:textAllCaps="false"
+        android:layout_centerHorizontal="true"
+        />
 
     <TextView
         android:id="@+id/tv_file_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-
-        android:layout_alignBaseline="@+id/checkBoxFile"
-        android:layout_alignBottom="@+id/checkBoxFile"
-        android:layout_marginStart="10dp"
-        android:layout_toEndOf="@+id/checkBoxFile"
-        android:text="file"
-
+        android:layout_centerHorizontal="true"
+        android:layout_below="@+id/btnUploadFile"
+        android:layout_marginTop="15dp"
         />
 
 
@@ -164,7 +160,7 @@ tools:context="com.kashifirshad.listview.AddStoryActivity"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentStart="true"
-        android:layout_below="@+id/checkBoxFile"
+        android:layout_below="@+id/tv_file_name"
         android:layout_marginStart="11dp"
         android:layout_marginTop="15dp"
         android:text="Id:"

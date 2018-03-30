@@ -26,6 +26,7 @@ public class AddStoryActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_story);
+        tvFileName = (TextView) findViewById(R.id.tv_file_name);
 
 
 
@@ -49,6 +50,10 @@ public class AddStoryActivity extends AppCompatActivity {
                 EditText vProjId = (EditText) findViewById(R.id.Story);
                 vProjId.setText( bundle.getString("story"));
             }
+            if(bundle.containsKey("filePaths")){
+                tvFileName.setText( bundle.getString("filePaths"));
+            }
+
             if(bundle.containsKey("devHrs")){
                 EditText vProjId = (EditText) findViewById(R.id.editHours);
                 vProjId.setText( bundle.getString("devHrs"));
@@ -78,14 +83,14 @@ public class AddStoryActivity extends AppCompatActivity {
                 EditText editStory = (EditText) findViewById(R.id.Story);
                 EditText editHours = (EditText) findViewById(R.id.editHours);
                 EditText editCost = (EditText) findViewById(R.id.editCost);
-                String storeyText = editStory.getText().toString();
-                if(storeyText.length() == 0){
+                String StoryText = editStory.getText().toString();
+                if(StoryText.length() == 0){
                     Toast.makeText(getApplicationContext(),
                             "Story Text Can not be blank " ,
                             Toast.LENGTH_LONG).show();
 
                 }
-                else if(storeyText == "Add New Story"){
+                else if(StoryText == "Add New Story"){
                     Toast.makeText(getApplicationContext(),
                             "Story with this text can not be added" ,
                             Toast.LENGTH_LONG).show();
@@ -95,22 +100,21 @@ public class AddStoryActivity extends AppCompatActivity {
                     DatabaseHelper dh = new DatabaseHelper(getApplicationContext());
                     TextView vId = (TextView) findViewById(R.id.textId2);
                     int projIdNew = Integer.parseInt(vId.getText().toString());
-                    int count = dh.getOtherProjectCount(storeyText, projIdNew);
+                    int count = dh.getOtherProjectCount(StoryText, projIdNew);
 
                     if(count > 0){
                         Toast.makeText(getApplicationContext(), "A Story with same name already Exists ", Toast.LENGTH_LONG).show();
-                        Log.e("ProjectAlreadyExists***","Project Already Exists");
                     }else {
 
                         TextView projTV = (TextView) findViewById(R.id.projectId2);
                         int projId = Integer.parseInt(projTV.getText().toString());
 
                         if(projIdNew == 0){
-                            Project proj = new Project(storeyText, editHours.getText().toString(), editCost.getText().toString(), null,0,0,0,projId,0,0  );
+                            Project proj = new Project(StoryText,tvFileName.getText().toString(), editHours.getText().toString(), editCost.getText().toString(), null,0,0,projId,0,0, MainActivity.user  );
                             long storyId= dh.createProject(proj);
                             vId.setText(Long.toString(storyId));
                         }else{
-                            Project proj = new Project(projIdNew,storeyText, editHours.getText().toString(), editCost.getText().toString(), null,0,0,0,projId,0,0  );
+                            Project proj = new Project(projIdNew,StoryText,tvFileName.getText().toString(), editHours.getText().toString(), editCost.getText().toString(), null,0,0,projId,0,0 , MainActivity.user );
                             dh.updateProject(proj);
                         }
                         Toast.makeText(getApplicationContext(), "Project Saved Successfully", Toast.LENGTH_LONG).show();
@@ -120,22 +124,13 @@ public class AddStoryActivity extends AppCompatActivity {
                 }
             }
         });
-        tvFileName = (TextView) findViewById(R.id.tv_file_name);
 
-        CheckBox checkBoxFile = (CheckBox) findViewById(R.id.checkBoxFile);
+        Button checkBoxFile = (Button) findViewById(R.id.btnUploadFile);
         checkBoxFile.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
-                //is chkIos checked?
-                if (((CheckBox) v).isChecked()) {
                     showFileChooser();
-                }
-                else{
-
-                }
-                //case 2
-
             }
         });
 
@@ -169,7 +164,15 @@ public class AddStoryActivity extends AppCompatActivity {
 //                Log.i(TAG,"Selected File Path:" + selectedFilePath);
 
                 if(selectedFilePath != null && !selectedFilePath.equals("")){
-                    tvFileName.setText(selectedFilePath);
+                    String filePaths = tvFileName.getText().toString();
+                    if(filePaths != null && !filePaths.equals("") ){
+                        if(!filePaths.contains(selectedFilePath))
+                            filePaths= filePaths +", "+selectedFilePath;
+                    }else{
+                        filePaths = selectedFilePath;
+                    }
+
+                    tvFileName.setText(filePaths);
                 }else{
                     Toast.makeText(this,"Cannot upload file to server",Toast.LENGTH_SHORT).show();
                 }

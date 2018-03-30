@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -22,6 +24,7 @@ import android.widget.ExpandableListView.OnChildClickListener;
 import android.widget.ExpandableListView.OnGroupClickListener;
 import android.widget.ExpandableListView.OnGroupCollapseListener;
 import android.widget.ExpandableListView.OnGroupExpandListener;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import static android.Manifest.permission.ACCESS_NETWORK_STATE;
@@ -37,7 +40,10 @@ public class MainActivity extends Activity{
     List<Project> listDataHeader;
     HashMap<Project, List<Project>> listDataChild;
     public static final int RequestPermissionCode = 1;
-
+    String userEmail;
+    public static User user;
+    public static boolean isSuperUser = false;
+    public static Timer syncTimer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,17 +57,43 @@ public class MainActivity extends Activity{
             }
         });
 
-        if(checkPermissions() != true)
+        if(checkPermissions() != true){
             return;
+        }
 
-        allowPermission.setVisibility(View.GONE);
+
+        allowPermission.setVisibility(View.INVISIBLE);
+        userEmail = new UserEmailFetcher().getEmail(MainActivity.this.getApplicationContext());
+        if(userEmail.equals("kashif.ir@gmail.com"))
+            this.isSuperUser = true;
+        findViewById(R.id.addProj).setVisibility(View.VISIBLE);
+        findViewById(R.id.btnPreferences).setVisibility(View.VISIBLE);
+        ((TextView) findViewById(R.id.textMsg)).setText("You are logged in as " + userEmail);
+
+        DatabaseHelper DH = new DatabaseHelper(MainActivity.this);
+        this.user = DH.getUser(userEmail);
+
+        if(this.user.getEmailAddress()==null){
+            this.user = new User(null, null, null, userEmail, null, null, null,
+                    null, null, null, null, 30, 0,
+            0, 0);
+            this.user.setId(DH.createUser(this.user));
+        }
 
         Button btnAddProj = (Button) findViewById(R.id.addProj);
-//        Button btnAddStory = (Button) findViewById(R.id.btnAddStory);
-//        btnAddStory.setOnClickListener(this);
         btnAddProj.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 Intent intent = new Intent(MainActivity.this, AddProjectActivity.class);
+                startActivity(intent);
+                finish();
+            }
+        });
+
+
+        Button btnPreferences = (Button) findViewById(R.id.btnPreferences);
+        btnPreferences.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, PreferencesActivity.class);
                 startActivity(intent);
                 finish();
             }
@@ -143,6 +175,7 @@ public class MainActivity extends Activity{
                 bundle.putString("projTitle", proj.getStory());
                 bundle.putInt("storyId",story.getId());
                 bundle.putString("story", story.getStory());
+                bundle.putString("filePaths", story.getFilePaths());
                 bundle.putString("devHrs",story.getEstimatedHrs());
                 bundle.putString("devCost",story.getEstimateCost());
                 intent.putExtras(bundle);
@@ -164,14 +197,27 @@ public class MainActivity extends Activity{
             }
         });
 //        listAdapter.IsFirstRun = 0;
-
-
+        DH.closeDB();
+        if(syncTimer == null){
+            int delayMS = user.getSyncDuration()*1000;
+            syncTimer = new Timer();
+            syncTimer.scheduleAtFixedRate(
+                    new TimerTask()
+                    {
+                        public void run()
+                        {
+                            startService(new Intent(MainActivity.this, SyncService.class));
+                        }
+                    },
+                    0,      // run first occurrence immediately
+                    delayMS);  // run every three seconds
+        }
     }
 
 
 
     public void onClickStory(View v) {
-        Log.e("***","On Click pressed");
+
         switch (v.getId()) {
 
             case R.id.btnAddStory:
@@ -196,17 +242,13 @@ public class MainActivity extends Activity{
     private void prepareListData() {
         DatabaseHelper dh = new DatabaseHelper(getApplicationContext());
         listDataHeader = dh.getChildProjects(0);
-        Log.e("ListDataHeader****", listDataHeader.toString());
         listDataChild = new HashMap<Project, List<Project>>();
         for(int i=0; i< listDataHeader.size(); i++){
-                Log.e("i***",Integer.toString(i));
-                Log.e("ithDataHeader***",listDataHeader.get(i).toString());
                 List<Project> childProjects = dh.getChildProjects(listDataHeader.get(i).getId());
-                Log.e("ith children****",childProjects.toString());
-                childProjects.add( new Project(999999,"Add New Story","","","",0,0,0,listDataHeader.get(i).getId(),0,0));
-                Log.e("Default Child***",childProjects.toString() );
+                childProjects.add( new Project(999999,"Add New Story",null, "","","",0,0,listDataHeader.get(i).getId(),0,0, this.user));
                 listDataChild.put((Project) listDataHeader.get(i),childProjects);
         }
+        dh.closeDB();
     }
 
     public void EnableRuntimePermission() {
@@ -248,5 +290,6 @@ public class MainActivity extends Activity{
                 break;
         }
     }
+
 
 }
